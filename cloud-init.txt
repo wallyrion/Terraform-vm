@@ -1,0 +1,3 @@
+﻿#cloud-config
+runcmd:
+  - echo "Custom data is working"
