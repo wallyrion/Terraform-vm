@@ -98,6 +98,54 @@ resource "azurerm_virtual_machine" "vm" {
   }
 }
 
+resource "azurerm_network_security_group" "nsg" {
+  name                = "seq-nsg-${random_id.rg_suffix.hex}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "allow_ssh"
+    priority                   = 1000
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "allow_http"
+    priority                   = 1010
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "allow_experiment_bj"
+    priority                   = 1020
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5567"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+
+resource "azurerm_network_interface_security_group_association" "nic_nsg" {
+  network_interface_id      = azurerm_network_interface.nic_with_pip.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
 resource "null_resource" "install_docker" {
   depends_on = [azurerm_virtual_machine.vm, azurerm_public_ip.public_ip]
 
@@ -123,7 +171,8 @@ resource "null_resource" "install_docker" {
       "sudo usermod -aG docker azureuser",
       "sudo systemctl start docker",
       "sudo systemctl enable docker",
-      "sudo docker run -d --name seq -e ACCEPT_EULA=Y -p 80:80 datalust/seq"
+      "sudo docker run -d --name seq -e ACCEPT_EULA=Y -p 80:80 datalust/seq",
+      "sudo docker run -d --name experiment-bj -p 5567:8080 oleksiikorniienko/experiment-bj"
     ]
   }
 }
