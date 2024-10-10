@@ -138,6 +138,30 @@ resource "azurerm_network_security_group" "nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "allow_aspire_dashboard"
+    priority                   = 1030
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5568"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+  
+  security_rule {
+    name                       = "allow_aspire_dashboard2"
+    priority                   = 1040
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5569"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 
@@ -172,7 +196,7 @@ resource "null_resource" "install_docker" {
       "sudo systemctl start docker",
       "sudo systemctl enable docker",
       "sudo docker run -d --name seq -e ACCEPT_EULA=Y -p 80:80 datalust/seq",
-      "sudo docker run -d --name experiment-bj -p 5567:8080 oleksiikorniienko/experiment-bj"
+      "sudo  docker run -d --restart unless-stopped -it -p 5568:18888 -p 5569:18889 --name aspire-dashboard -e DASHBOARD__OTLP__AUTHMODE='ApiKey' -e DASHBOARD__OTLP__PRIMARYAPIKEY='oleksii_key_1' -e Dashboard__Frontend__BrowserToken='oleksii_browser_token' mcr.microsoft.com/dotnet/aspire-dashboard:latest"
     ]
   }
 }
